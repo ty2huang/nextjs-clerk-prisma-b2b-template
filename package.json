@@ -1,27 +1,43 @@
 {
-  "name": "clerk-nextjs-prisma",
+  "name": "nextjs-clerk-prisma",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npx prisma migrate deploy && npx prisma db seed && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build-local": "npx prisma migrate dev && npx prisma db seed && next build",
+    "postinstall": "npx prisma generate --no-engine"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.23.2",
+    "@clerk/themes": "^2.2.54",
+    "@prisma/client": "^6.11.1",
+    "@prisma/extension-accelerate": "^2.0.1",
+    "@vercel/blob": "^1.1.1",
+    "lucide-react": "^0.525.0",
+    "next": "15.3.4",
+    "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.4"
+    "sonner": "^2.0.5",
+    "svix": "^1.68.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "@eslint/eslintrc": "^3"
+    "prisma": "^6.11.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.3",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   }
 }

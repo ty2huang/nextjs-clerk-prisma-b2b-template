@@ -1,8 +1,47 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Prerequisites
+
+- [Node.js 18+](https://nodejs.org/)
+- [Clerk account](https://clerk.com/)
+- [ngrok account](https://ngrok.com/)
+
 ## Getting Started
 
-First, run the development server:
+1. Create a new Clerk application
+
+Sign in to Clerk and navigate to the home page. From there, press the Create Application button to create a new application. Enter a title, select your sign-in options, and click Create Application.
+
+2. Initialize Prisma
+
+```bash
+npx prisma init --db --output ../src/generated/prisma
+```
+
+3. Set up ngrok
+
+Create a new [ngrok account](https://ngrok.com/) and set up your authtoken on your machine. Create a free domain and forward it to your local server.
+
+```bash
+npm install --global ngrok
+ngrok http --url=your-domain.ngrok-free.app 3000
+```
+
+Copy the ngrok Forwarding URL. This will be used to set the webhook URL in Clerk.
+
+4. Add the webhook URL to Clerk
+
+Navigate to the Webhooks section of your Clerk application located near the bottom of the Configure tab under Developers.
+
+Click Add Endpoint and paste the ngrok URL into the Endpoint URL field and add /api/webhooks/clerk to the end of the URL. It should look similar to this:
+
+```
+https://your-domain.ngrok-free.app/api/webhooks/clerk
+```
+
+Copy the Signing Secret and add it to your .env file.
+
+5. Run the development server:
 
 ```bash
 npm run dev
