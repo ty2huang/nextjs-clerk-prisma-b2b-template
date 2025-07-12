@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import PostInputs from "./PostInputs";
 import { X } from "lucide-react";
 

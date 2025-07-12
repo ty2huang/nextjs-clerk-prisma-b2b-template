@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createGroupAction } from "@/actions/auth";
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
 
 interface GroupModalProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export default function GroupModal({ isOpen, onClose, onGroupCreated }: GroupMod
                 <label htmlFor="logo-upload" className="cursor-pointer">
                   <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 hover:bg-gray-100 transition-colors">
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-cover rounded-md" />
+                      <Image src={logoPreview} width={64} height={64} alt="Logo preview" className="h-full w-full object-cover rounded-md" />
                     ) : (
                       <Upload className="h-4 w-4 text-gray-500" />
                     )}

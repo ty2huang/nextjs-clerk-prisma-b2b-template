@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GroupModal from "@/components/org/[orgSlug]/GroupModal";
 import GroupCard from "@/components/org/[orgSlug]/GroupCard";
 import { Group } from "@prisma/client";
 import { Users, Plus } from "lucide-react";
+import { clearCurrentGroupAction } from "@/actions/auth";
 
 interface OrgPageClientProps {
   allGroups: Group[];
@@ -18,6 +19,10 @@ export default function OrgPageClient({ allGroups, userGroups, isAdmin, sessionO
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'your' | 'all'>('your');
   const router = useRouter();
+
+  useEffect(() => {
+    clearCurrentGroupAction();
+  }, []);
 
   return (
     <div className="w-6xl mx-auto p-6">

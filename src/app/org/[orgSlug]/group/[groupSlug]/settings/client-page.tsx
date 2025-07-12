@@ -11,6 +11,7 @@ import {
 import { Upload, Edit, Trash2, LogOut, Save, X } from "lucide-react";
 import { Group } from "@prisma/client";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import Image from "next/image";
 
 interface GroupSettingsClientProps {
   group: Group;
@@ -188,8 +189,10 @@ export default function GroupSettingsClient({
                   onClick={isEditing ? () => document.getElementById('logo-upload')?.click() : undefined}
                 >
                   {logoPreview ? (
-                    <img 
+                    <Image 
                       src={logoPreview} 
+                      width={56}
+                      height={56}
                       alt="Group logo" 
                       className="w-full h-full object-cover"
                     />
@@ -310,7 +313,7 @@ export default function GroupSettingsClient({
               <div>
                 <h3 className="font-medium text-gray-900">Leave Group</h3>
                 <p className="text-sm text-gray-600">
-                  Remove yourself from this group. You won't be able to access group content.
+                  Remove yourself from this group. You won&apos;t be able to access group content.
                 </p>
               </div>
               <button

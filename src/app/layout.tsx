@@ -4,7 +4,8 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
-import { getOptionalGroup } from "@/lib/clerk";
+import { getOptionalGroup } from "@/lib/session";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,19 +27,23 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const currentGroup = await getOptionalGroup();
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '/';
   
+  // Do not remove the ternary operator - otherwise we run into build error "DYNAMIC_SERVER_USAGE"
+  const currentGroup = pathname.includes('/group/') ? await getOptionalGroup() : undefined;
+
   return (
-      <html lang="en" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <ClerkProvider>
-            <Navbar currentGroup={currentGroup}/>
-            <div className="bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-1">
-              {children}
-            </div>
-            <Toaster />
-          </ClerkProvider>
-        </body>
-      </html>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClerkProvider>
+          <Navbar currentGroup={currentGroup} />
+          <div className="bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-1">
+            {children}
+          </div>
+          <Toaster />
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

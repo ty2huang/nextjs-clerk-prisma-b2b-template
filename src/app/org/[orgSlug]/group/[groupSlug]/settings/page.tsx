@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { isSessionUserGroupOrOrgAdmin } from "@/actions/auth";
+import { isCurrentUserGroupOrOrgAdmin } from "@/lib/helpers/auth";
 import { getGroupMembership } from "@/lib/db/auth";
-import { getCachedAuth, getCurrentGroup } from "@/lib/clerk";
+import { getCachedAuth, getOptionalGroup } from "@/lib/session";
 import GroupSettingsClient from "./client-page";
 
 interface GroupSettingsPageProps {
@@ -13,12 +13,15 @@ export default async function GroupSettingsPage({ params }: GroupSettingsPagePro
   
   try {
     // Get group data
-    const group = await getCurrentGroup();
+    const group = await getOptionalGroup();
+    if (!group) {
+      return <></>
+    }
 
     // Get user permissions and membership
     const { userId } = await getCachedAuth();
     const [isGroupAdmin, directMembership] = await Promise.all([
-      isSessionUserGroupOrOrgAdmin(group.id),
+      isCurrentUserGroupOrOrgAdmin(group.id),
       getGroupMembership(userId!, group.id)
     ]);
 

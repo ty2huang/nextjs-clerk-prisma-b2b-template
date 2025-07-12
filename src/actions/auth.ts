@@ -1,36 +1,19 @@
 "use server";
 
 import { 
-  createGroup, getUserFromId, getOrgFromId, createOrg, createUser, getGroupFromOrgAndSlug, 
-  listUserGroupsForOrg, getGroupMembership, updateGroup, deleteGroup, removeUserFromGroup, 
-  getGroupWithMemberships, addUserToGroup, updateGroupMembershipRole, listAllGroupsForOrg
+  createGroup, updateGroup, deleteGroup, addUserToGroup, removeUserFromGroup, 
+  getGroupFromOrgAndSlug, getGroupMembership, updateGroupMembershipRole
 } from "@/lib/db/auth";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { cache } from "react";
-import { getCachedAuth } from "../lib/clerk";
+import { getCachedAuth } from "../lib/session";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { groupRoles } from "@/lib/roles";
 import { Group, User } from "@prisma/client";
-
-// Organization Actions
-
-export const getOrCreateOrgFromClerkIdAction = async (clerkOrgId: string) => {
-  const org = await getOrgFromId(clerkOrgId);
-  
-  // Sync clerk org to db if not exists
-  if (!org) {
-    const clerk = await clerkClient();
-    const { name, slug } = await clerk.organizations.getOrganization({
-      organizationId: clerkOrgId,
-    });
-    const newOrg = await createOrg(clerkOrgId, name, slug);
-    return newOrg;
-  }
-  
-  return org;
-}
+import { getOrCreateUserFromClerkId, isCurrentUserGroupOrOrgAdmin, validateGroupMembership } from "@/lib/helpers/auth";
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 // Organization Membership Actions
 
@@ -57,43 +40,7 @@ export async function getOrganizationMembersAction(): Promise<User[]> {
   }
 }
 
-// User Actions
-
-export const getOrCreateUserFromClerkIdAction = async (clerkUserId: string) => {
-  const user = await getUserFromId(clerkUserId);
-  
-  // Sync clerk user to db if not exists
-  if (!user){
-    const clerk = await clerkClient();
-    const userData = await clerk.users.getUser(clerkUserId);
-    if (!userData) throw new Error("User not found");
-    const { firstName, lastName, emailAddresses } = userData;
-    const newUser = await createUser(clerkUserId, `${firstName} ${lastName}`, emailAddresses[0].emailAddress);
-    return newUser;
-  }
-
-  return user;
-}
-
 // Group Actions
-
-export const getGroupFromSlugAction = async (slug: string) => {
-  const { orgId } = await getCachedAuth();
-  const group = await getGroupFromOrgAndSlug(orgId!, slug);
-  return group;
-}
-
-export const getAllGroupsAction = async () => {
-  const { orgId } = await getCachedAuth();
-  const groups = await listAllGroupsForOrg(orgId!);
-  return groups;
-}
-
-export const getUserGroupsAction = async () => {
-  const { userId, orgId } = await getCachedAuth();
-  const groups = await listUserGroupsForOrg(userId!, orgId!);
-  return groups;
-}
 
 async function putLogo(logo: File | null) {
   if (!logo) return null;
@@ -139,7 +86,7 @@ export async function updateGroupAction(groupId: string, name: string, slug: str
   const { orgId } = await getCachedAuth();
   
   // Check if user is an admin (either org admin or group admin)
-  const canUpdateGroup = await isSessionUserGroupOrOrgAdmin(groupId);
+  const canUpdateGroup = await isCurrentUserGroupOrOrgAdmin(groupId);
   
   if (!canUpdateGroup) {
     throw new Error("Forbidden - Admin role required");
@@ -190,7 +137,7 @@ export async function updateGroupAction(groupId: string, name: string, slug: str
 
 export async function deleteGroupAction(groupId: string) {
   // Check if user is an admin (either org admin or group admin)
-  const isAdmin = await isSessionUserGroupOrOrgAdmin(groupId);
+  const isAdmin = await isCurrentUserGroupOrOrgAdmin(groupId);
   
   if (!isAdmin) {
     throw new Error("Forbidden - Admin role required");
@@ -207,49 +154,11 @@ export async function deleteGroupAction(groupId: string) {
 
 // Group Membership Actions
 
-export const isGroupMember = async (groupId: string) => {
-  const { userId } = await getCachedAuth();
-  const membership = await getGroupMembership(userId!, groupId);
-  return !!membership;
-}
-
-export const validateGroupMembershipAction = cache( 
-  async (groupId: string) => {
-    const { userId } = await getCachedAuth();
-    const membership = await getGroupMembership(userId!, groupId);
-    if (!membership) {
-      console.error(`User ${userId} is not a member of group ${groupId}`);
-      throw new Error(`User is not a member of group`);
-    }
-    return membership;
-  }
-);
-
-export const isSessionUserGroupOrOrgAdmin = cache(
-  async (groupId: string) => {
-    const { isAdmin } = await getCachedAuth();
-    if (isAdmin) return true;
-    
-    const membership = await validateGroupMembershipAction(groupId);
-    return membership.role === "admin";
-  }
-);
-
-export const getGroupMembersAction = async (groupId: string) => {
-  const groupWithMembers = await getGroupWithMemberships(groupId);
-  
-  if (!groupWithMembers) {
-    throw new Error("Group not found");
-  }
-
-  return groupWithMembers.memberships;
-}
-
 export async function leaveGroupAction(groupId: string) {
   const { userId } = await getCachedAuth();
   
   try {
-    await validateGroupMembershipAction(groupId);
+    await validateGroupMembership(groupId);
 
     await removeUserFromGroup(userId!, groupId);
     return { success: true };
@@ -261,7 +170,7 @@ export async function leaveGroupAction(groupId: string) {
 
 export async function addUserToGroupAction(groupId: string, userId: string, role: string) {
   // Check if user is an admin (either org admin or group admin)
-  const isAdmin = await isSessionUserGroupOrOrgAdmin(groupId);
+  const isAdmin = await isCurrentUserGroupOrOrgAdmin(groupId);
   if (!isAdmin) {
     throw new Error("Forbidden - Admin role required");
   }
@@ -274,7 +183,7 @@ export async function addUserToGroupAction(groupId: string, userId: string, role
     }
 
     // Ensure user exists in our database
-    await getOrCreateUserFromClerkIdAction(userId);
+    await getOrCreateUserFromClerkId(userId);
 
     // Add user to group as a member
     await addUserToGroup(userId, groupId, role);
@@ -287,7 +196,7 @@ export async function addUserToGroupAction(groupId: string, userId: string, role
 }
 
 export async function removeUserFromGroupAction(groupId: string, userId: string) {
-  const isAdmin = await isSessionUserGroupOrOrgAdmin(groupId);
+  const isAdmin = await isCurrentUserGroupOrOrgAdmin(groupId);
   if (!isAdmin) {
     throw new Error("Forbidden - Admin role required");
   }
@@ -303,7 +212,7 @@ export async function removeUserFromGroupAction(groupId: string, userId: string)
 }
 
 export async function updateGroupMembershipRoleAction(groupId: string, userId: string, newRole: string) {
-  const isAdmin = await isSessionUserGroupOrOrgAdmin(groupId);
+  const isAdmin = await isCurrentUserGroupOrOrgAdmin(groupId);
   if (!isAdmin) {
     throw new Error("Forbidden - Admin role required");
   }
@@ -326,23 +235,25 @@ export async function updateGroupMembershipRoleAction(groupId: string, userId: s
 // Current Group in Session Actions
 
 export async function setCurrentGroupAction(group: Group) {
-  const { userId, isAdmin } = await getCachedAuth();
+  const { isAdmin } = await getCachedAuth();
 
   try {
     // Verify the user has access to this group
     if (!isAdmin) {
-      await validateGroupMembershipAction(group.id);
+      await validateGroupMembership(group.id);
     }
 
-    // Update user's public metadata to include current group ID
-    const clerk = await clerkClient();
-    
-    await clerk.users.updateUser(userId!, {
-      publicMetadata: {
-        currentGroup: group
-      }
+    // Store current group in cookies
+    const cookieStore = await cookies();
+    cookieStore.set('currentGroup', JSON.stringify(group), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
     });
 
+    revalidatePath('/');
     return { success: true };
   } catch (error) {
     console.error("Failed to set current group:", error);
@@ -351,15 +262,9 @@ export async function setCurrentGroupAction(group: Group) {
 }
 
 export async function clearCurrentGroupAction() {
-  const { userId } = await getCachedAuth();
-
   try {
-    const clerk = await clerkClient();
-    
-    await clerk.users.updateUser(userId!, {
-      publicMetadata: { currentGroup: undefined }
-    });
-
+    const cookieStore = await cookies();
+    cookieStore.delete('currentGroup');
     return { success: true };
   } catch (error) {
     console.error("Failed to clear current group:", error);

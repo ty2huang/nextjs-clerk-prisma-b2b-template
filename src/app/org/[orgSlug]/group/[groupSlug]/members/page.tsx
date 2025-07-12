@@ -1,16 +1,30 @@
-import { getGroupMembersAction, isSessionUserGroupOrOrgAdmin } from "@/actions/auth";
 import { notFound } from "next/navigation";
 import MembersPageClient from "./client-page";
-import { getCachedAuth, getCurrentGroup } from "@/lib/clerk";
+import { getCachedAuth, getOptionalGroup } from "@/lib/session";
+import { isCurrentUserGroupOrOrgAdmin } from "@/lib/helpers/auth";
+import { getGroupWithMemberships } from "@/lib/db/auth";
+
+const getGroupMembers = async (groupId: string) => {
+  const groupWithMembers = await getGroupWithMemberships(groupId);
+  
+  if (!groupWithMembers) {
+    throw new Error("Group not found");
+  }
+
+  return groupWithMembers.memberships;
+}
 
 export default async function MembersPage() {
   try {
-    const { userId } = await getCachedAuth();
-    const group = await getCurrentGroup();
+    const group = await getOptionalGroup();
+    if (!group) {
+      return <></>
+    }
 
+    const { userId } = await getCachedAuth();
     const [members, isAdmin] = await Promise.all([
-      getGroupMembersAction(group.id),
-      isSessionUserGroupOrOrgAdmin(group.id).catch(() => false), // If it fails, user is not admin
+      getGroupMembers(group.id),
+      isCurrentUserGroupOrOrgAdmin(group.id).catch(() => false), // If it fails, user is not admin
     ]);
 
     return (

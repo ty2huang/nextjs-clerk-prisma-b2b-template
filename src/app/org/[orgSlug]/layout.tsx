@@ -1,6 +1,24 @@
 import { redirect } from "next/navigation";
-import { getCachedAuth } from "@/lib/clerk";
-import { getOrCreateOrgFromClerkIdAction, getOrCreateUserFromClerkIdAction } from "@/actions/auth";
+import { getCachedAuth } from "@/lib/session";
+import { getOrgFromId, createOrg } from "@/lib/db/auth";
+import { clerkClient } from "@clerk/nextjs/server";
+import { getOrCreateUserFromClerkId } from "@/lib/helpers/auth";
+
+const getOrCreateOrgFromClerkId = async (clerkOrgId: string) => {
+  const org = await getOrgFromId(clerkOrgId);
+  
+  // Sync clerk org to db if not exists
+  if (!org) {
+    const clerk = await clerkClient();
+    const { name, slug } = await clerk.organizations.getOrganization({
+      organizationId: clerkOrgId,
+    });
+    const newOrg = await createOrg(clerkOrgId, name, slug);
+    return newOrg;
+  }
+  
+  return org;
+}
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -28,8 +46,8 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   }
 
   // Ensure the user and org exist in the database
-  await getOrCreateUserFromClerkIdAction(userId);
-  await getOrCreateOrgFromClerkIdAction(orgId);
+  await getOrCreateUserFromClerkId(userId);
+  await getOrCreateOrgFromClerkId(orgId);
 
   return (
     <>

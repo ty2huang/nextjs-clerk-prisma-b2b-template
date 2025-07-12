@@ -303,7 +303,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                         onClick={() => member.user.clerkId !== sessionUserId && handleRemoveMember(member)}
                         disabled={isPending || member.user.clerkId === sessionUserId}
                         className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:text-gray-400"
-                        title={member.user.clerkId === sessionUserId ? "This is you! Go to Settings to leave group" : "Remove member"}
+                        title={member.user.clerkId === sessionUserId ? "Go to Settings to leave group" : "Remove member"}
                       >
                         <Trash className="h-4 w-4" />
                       </button>

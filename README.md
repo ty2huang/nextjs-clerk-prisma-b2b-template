@@ -24,7 +24,7 @@ Create a new [ngrok account](https://ngrok.com/) and set up your authtoken on yo
 
 ```bash
 npm install --global ngrok
-ngrok http --url=your-domain.ngrok-free.app 3000
+ngrok http --url=[your-domain].ngrok-free.app 3000
 ```
 
 Copy the ngrok Forwarding URL. This will be used to set the webhook URL in Clerk.

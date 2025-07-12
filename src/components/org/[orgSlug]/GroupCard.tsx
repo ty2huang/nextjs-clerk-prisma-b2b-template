@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Group } from "@prisma/client";
 import { Users, ArrowRight } from "lucide-react";
 import { setCurrentGroupAction } from "@/actions/auth";
+import Image from "next/image";
 
 interface GroupCardProps {
   group: Group;
@@ -33,8 +34,10 @@ export default function GroupCard({ group, sessionOrgSlug, showViewGroupLink = t
       <div className="flex-1">
         <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
           {group.logoUrl ? (
-            <img 
+            <Image 
               src={group.logoUrl} 
+              width={48}
+              height={48}
               alt={`${group.name} logo`}
               className="w-full h-full object-cover rounded-lg"
             />

@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home } from "lucide-react";
 import { Group } from "@prisma/client";
+import Image from "next/image";
 
 const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
   const pathname = usePathname();
@@ -50,8 +51,10 @@ const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
                 <span className="text-gray-400 text-xl">/</span>
                 <div className="flex items-center gap-2 pl-2">
                   {currentGroup.logoUrl ? (
-                    <img 
+                    <Image 
                       src={currentGroup.logoUrl} 
+                      width={20}
+                      height={20}
                       alt={`${currentGroup.name} logo`}
                       className="w-5 h-5 rounded object-cover"
                     />
