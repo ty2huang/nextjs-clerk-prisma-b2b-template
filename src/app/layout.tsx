@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
 import { getOptionalGroup } from "@/lib/session";
 import { headers } from "next/headers";
+import { protocol, rootDomain } from "@/lib/utils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClerkProvider>
+        <ClerkProvider afterSignOutUrl={`${protocol}://${rootDomain}`}>
           <Navbar currentGroup={currentGroup} />
           <div className="bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-1">
             {children}

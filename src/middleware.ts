@@ -16,7 +16,7 @@ function extractSubdomain(request: NextRequest): string | null {
 }
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher(['/']);
+const isPublicRoute = createRouteMatcher(["/", "/api/(.*)"]);
 
 export default async function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname: requestPath } = req.nextUrl;
