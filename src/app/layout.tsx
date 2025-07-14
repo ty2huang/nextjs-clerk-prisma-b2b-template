@@ -31,7 +31,7 @@ export default async function RootLayout({
   const pathname = headersList.get('x-pathname') || '/';
   
   // Do not remove the ternary operator - otherwise we run into build error "DYNAMIC_SERVER_USAGE"
-  const currentGroup = pathname.includes('/group/') ? await getOptionalGroup() : undefined;
+  const currentGroup = pathname.includes('/groups/') ? await getOptionalGroup() : undefined;
 
   return (
     <html lang="en" suppressHydrationWarning>

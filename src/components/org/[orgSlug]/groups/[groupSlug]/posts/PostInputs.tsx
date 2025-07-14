@@ -30,8 +30,8 @@ export default function PostInputs({ onPostCreated }: PostInputsProps) {
       
       location.reload();
     } catch (error) {
-      toast.error("Network error: Failed to create post");
       console.error("Failed to create post:", error);
+      toast.error("Failed to create post");
     }
   }
 

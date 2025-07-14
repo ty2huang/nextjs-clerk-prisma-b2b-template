@@ -235,17 +235,12 @@ export async function updateGroupMembershipRoleAction(groupId: string, userId: s
 // Current Group in Session Actions
 
 export async function setCurrentGroupAction(group: Group) {
-  const { isAdmin } = await getCachedAuth();
-
   try {
-    // Verify the user has access to this group
-    if (!isAdmin) {
-      await validateGroupMembership(group.id);
-    }
+    const groupJsonStr = JSON.stringify(group);
 
     // Store current group in cookies
     const cookieStore = await cookies();
-    cookieStore.set('currentGroup', JSON.stringify(group), {
+    cookieStore.set('currentGroup', groupJsonStr, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -3,6 +3,7 @@ import { getCachedAuth } from "@/lib/session";
 import { getOrgFromId, createOrg } from "@/lib/db/auth";
 import { clerkClient } from "@clerk/nextjs/server";
 import { getOrCreateUserFromClerkId } from "@/lib/helpers/auth";
+import { rootDomain, protocol } from "@/lib/utils";
 
 const getOrCreateOrgFromClerkId = async (clerkOrgId: string) => {
   const org = await getOrgFromId(clerkOrgId);
@@ -28,26 +29,17 @@ interface OrgLayoutProps {
 // Create a wrapper component that provides auth data
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { orgSlug } = await params;
+
   const { orgSlug: sessionOrgSlug, userId, orgId } = await getCachedAuth();
 
-  // Redirect to home if user is not authenticated
-  if (!userId) {
-    redirect("/");
-  }
-
-  // If there's no active organization in the session, redirect to home
-  if (!sessionOrgSlug || !orgId) {
-    redirect("/");
-  }
-
-  // Check if the URL orgSlug matches the session orgSlug
+  // If they are not equal, this means that the organization sync in the middleware failed
   if (orgSlug !== sessionOrgSlug) {
-    redirect("/");
+    redirect(`${protocol}://${rootDomain}`); // Redirect to organization selection page
   }
 
   // Ensure the user and org exist in the database
-  await getOrCreateUserFromClerkId(userId);
-  await getOrCreateOrgFromClerkId(orgId);
+  await getOrCreateUserFromClerkId(userId!);
+  await getOrCreateOrgFromClerkId(orgId!);
 
   return (
     <>

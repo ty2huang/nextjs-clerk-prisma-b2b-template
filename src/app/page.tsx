@@ -1,6 +1,15 @@
+import { protocol, rootDomain } from "@/lib/utils";
 import { OrganizationList, SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function HomePage() {
+  const headersList = await headers();
+  const subdomain = headersList.get("x-subdomain");
+  if (subdomain) {
+    redirect("/app");
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <SignedOut>
@@ -28,18 +37,10 @@ export default async function HomePage() {
 
       <SignedIn>
         <div className="flex flex-col items-center justify-center text-center py-16 gap-8">
-          {/* <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Select an Organization
-            </h1>
-            <p className="text-xl text-gray-600">
-              Choose an organization to access its groups and content.
-            </p>
-          </div> */}
           <OrganizationList 
             hidePersonal={true} 
-            afterSelectOrganizationUrl="/org/:slug"
-            afterCreateOrganizationUrl="/org/:slug"
+            afterSelectOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
+            afterCreateOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
           />
         </div>
       </SignedIn>

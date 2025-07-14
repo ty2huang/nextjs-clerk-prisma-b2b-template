@@ -17,14 +17,12 @@ interface GroupSettingsClientProps {
   group: Group;
   isUserAdmin: boolean;
   isDirectMember: boolean;
-  orgSlug: string;
 }
 
 export default function GroupSettingsClient({
   group,
   isUserAdmin,
-  isDirectMember,
-  orgSlug
+  isDirectMember
 }: GroupSettingsClientProps) {
   const router = useRouter();
   
@@ -91,14 +89,14 @@ export default function GroupSettingsClient({
         
         // If slug changed, redirect to new URL
         if (editSlug !== group.slug) {
-          router.push(`/org/${orgSlug}/group/${editSlug}/settings`);
+          router.push(`/app/groups/${editSlug}/settings`);
         } else {
           router.refresh();
         }
       }
     } catch (error) {
       console.error("Error updating group:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update group");
+      toast.error("Failed to update group");
     } finally {
       setIsSubmitting(false);
     }
@@ -112,11 +110,11 @@ export default function GroupSettingsClient({
       
       if (result.success) {
         toast.success("Group deleted successfully");
-        router.push(`/org/${orgSlug}`);
+        router.push("/app/groups");
       }
     } catch (error) {
       console.error("Error deleting group:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete group");
+      toast.error("Failed to delete group");
     } finally {
       setIsSubmitting(false);
       setShowDeleteConfirm(false);
@@ -131,11 +129,11 @@ export default function GroupSettingsClient({
       
       if (result.success) {
         toast.success("Left group successfully");
-        router.push(`/org/${orgSlug}`);
+        router.push("/app/groups");
       }
     } catch (error) {
       console.error("Error leaving group:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to leave group");
+      toast.error("Failed to leave group");
     } finally {
       setIsSubmitting(false);
       setShowLeaveConfirm(false);

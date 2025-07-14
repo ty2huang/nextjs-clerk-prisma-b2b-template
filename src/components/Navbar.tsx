@@ -13,6 +13,7 @@ import Link from "next/link";
 import { Home } from "lucide-react";
 import { Group } from "@prisma/client";
 import Image from "next/image";
+import { protocol, rootDomain } from "@/lib/utils";
 
 const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
   const pathname = usePathname();
@@ -20,17 +21,17 @@ const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
   return (
     <header className="flex justify-between items-center p-4 gap-4 h-16 border-b border-gray-200">
       <div className="flex items-center gap-4">
-        {pathname !== "/" && (
+        {pathname.startsWith("/app/") && (
           <SignedIn>
-            <Link href="/org" className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-md transition-colors">
+            <Link href="/app" className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-md transition-colors">
               <Home className="w-5 h-5" />
             </Link>
             <span className="text-gray-400 text-xl">/</span>
             <OrganizationSwitcher 
               hidePersonal={true}
-              afterSelectOrganizationUrl="/org/:slug"
-              afterCreateOrganizationUrl="/org/:slug"
-              afterLeaveOrganizationUrl="/"
+              afterSelectOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
+              afterCreateOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
+              afterLeaveOrganizationUrl={`${protocol}://${rootDomain}`}
               appearance={{
                 elements: {
                   organizationPreview: {
@@ -46,7 +47,7 @@ const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
                 }
               }}
             />
-            {pathname.includes('/group/') && currentGroup && (
+            {pathname.includes('/groups/') && currentGroup && (
               <>
                 <span className="text-gray-400 text-xl">/</span>
                 <div className="flex items-center gap-2 pl-2">

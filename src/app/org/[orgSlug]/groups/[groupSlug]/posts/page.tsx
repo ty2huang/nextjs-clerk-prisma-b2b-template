@@ -1,4 +1,4 @@
-import PostsContainer from "@/components/org/[orgSlug]/group/[groupSlug]/posts/PostsContainer";
+import PostsContainer from "@/components/org/[orgSlug]/groups/[groupSlug]/posts/PostsContainer";
 import { getCachedAuth, getOptionalGroup } from "@/lib/session";
 import { getGroupMembership } from "@/lib/db/auth";
 import { getAllPostsFromOrg } from "@/lib/db/post";

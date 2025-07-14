@@ -26,8 +26,8 @@ export default function PostCard({ post, canDelete }: PostCardProps) {
       // Reload the page to refresh the posts list
       location.reload();
     } catch (error) {
-      toast.error("Network error: Failed to delete post");
       console.error("Failed to delete post:", error);
+      toast.error("Failed to delete post");
     } finally {
       setIsDeleting(false);
     }

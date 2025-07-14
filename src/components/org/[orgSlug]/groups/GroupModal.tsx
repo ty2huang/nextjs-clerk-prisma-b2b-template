@@ -72,7 +72,8 @@ export default function GroupModal({ isOpen, onClose, onGroupCreated }: GroupMod
         }
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create group");
+      console.error("Error creating group:", error);
+      toast.error("Failed to create group");
     } finally {
       setIsLoading(false);
     }

@@ -6,9 +6,9 @@ import { ChevronLeft, FileText, Users, Settings } from "lucide-react";
 
 export default function LeftPanel() {
   const pathname = usePathname();
-  const { orgSlug, groupSlug } = useParams<{ orgSlug: string; groupSlug: string }>();
+  const { groupSlug } = useParams<{ groupSlug: string }>();
 
-  const baseUrl = `/org/${orgSlug}/group/${groupSlug}`;
+  const baseUrl = `/app/groups/${groupSlug}`;
   
   const isPostsActive = pathname.startsWith(`${baseUrl}/posts`);
   const isMembersActive = pathname.startsWith(`${baseUrl}/members`);
@@ -17,7 +17,7 @@ export default function LeftPanel() {
   return (
     <div className="w-48 bg-white border-r border-gray-200 space-y-6">
       <Link 
-        href={`/org/${orgSlug}`} 
+        href="/app/groups"
         className="flex items-center px-4 py-3 text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100"
       >
         <ChevronLeft className="w-4 h-4 mr-2" />

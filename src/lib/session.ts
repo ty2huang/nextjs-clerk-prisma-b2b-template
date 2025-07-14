@@ -17,7 +17,7 @@ export async function getOptionalGroup() {
     if (!groupCookie?.value) {
       return undefined;
     }
-    
+
     return JSON.parse(groupCookie.value) as Group;
   } catch (error) {
     console.error("Failed to parse current group from cookies:", error);

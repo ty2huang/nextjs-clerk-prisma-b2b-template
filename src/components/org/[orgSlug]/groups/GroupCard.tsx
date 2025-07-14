@@ -8,11 +8,10 @@ import Image from "next/image";
 
 interface GroupCardProps {
   group: Group;
-  sessionOrgSlug: string;
   showViewGroupLink?: boolean;
 }
 
-export default function GroupCard({ group, sessionOrgSlug, showViewGroupLink = true }: GroupCardProps) {
+export default function GroupCard({ group, showViewGroupLink = true }: GroupCardProps) {
   const handleGroupClick = async () => {
     if (showViewGroupLink) {
       // Set the current group context before navigation
@@ -65,7 +64,7 @@ export default function GroupCard({ group, sessionOrgSlug, showViewGroupLink = t
 
   if (showViewGroupLink) {
     return (
-      <Link href={`/org/${sessionOrgSlug}/group/${group.slug}`} onClick={handleGroupClick}>
+      <Link href={`/app/groups/${group.slug}`} onClick={handleGroupClick}>
         {cardContent}
       </Link>
     );

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import GroupModal from "@/components/org/[orgSlug]/GroupModal";
-import GroupCard from "@/components/org/[orgSlug]/GroupCard";
+import GroupModal from "@/components/org/[orgSlug]/groups/GroupModal";
+import GroupCard from "@/components/org/[orgSlug]/groups/GroupCard";
 import { Group } from "@prisma/client";
 import { Users, Plus } from "lucide-react";
 import { clearCurrentGroupAction } from "@/actions/auth";
@@ -12,10 +12,9 @@ interface OrgPageClientProps {
   allGroups: Group[];
   userGroups: Group[];
   isAdmin: boolean;
-  sessionOrgSlug: string;
 }
 
-export default function OrgPageClient({ allGroups, userGroups, isAdmin, sessionOrgSlug }: OrgPageClientProps) {
+export default function OrgPageClient({ allGroups, userGroups, isAdmin }: OrgPageClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'your' | 'all'>('your');
   const router = useRouter();
@@ -86,8 +85,7 @@ export default function OrgPageClient({ allGroups, userGroups, isAdmin, sessionO
                 {userGroups.map(group => (
                   <div key={group.id} className="group">
                     <GroupCard 
-                      group={group} 
-                      sessionOrgSlug={sessionOrgSlug} 
+                      group={group}
                       showViewGroupLink={true}
                     />
                   </div>
@@ -134,8 +132,7 @@ export default function OrgPageClient({ allGroups, userGroups, isAdmin, sessionO
               {allGroups.map(group => (
                 <div key={group.id} className="group">
                   <GroupCard 
-                    group={group} 
-                    sessionOrgSlug={sessionOrgSlug} 
+                    group={group}
                     showViewGroupLink={isAdmin}
                   />
                 </div>
