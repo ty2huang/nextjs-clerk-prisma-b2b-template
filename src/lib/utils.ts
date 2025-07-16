@@ -1,5 +1,5 @@
 export const rootDomain =
-  process.env.VERCEL_PROJECT_PRODUCTION_URL || 'localhost:3000';
+  process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
 
 export const protocol =
   ["localhost", "127.0.0.1"].some(domain => rootDomain.includes(domain)) ? 'http' : 'https';
