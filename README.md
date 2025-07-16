@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# B2B Template
+
+This is a [Next.js](https://nextjs.org) template for building B2B applications. It uses [Clerk](https://clerk.com/) for authentication and [Prisma](https://www.prisma.io/) for database and ORM.
 
 ## Prerequisites
 
