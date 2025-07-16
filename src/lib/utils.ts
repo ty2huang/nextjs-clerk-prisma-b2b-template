@@ -3,3 +3,10 @@ export const rootDomain =
 
 export const protocol =
   ["localhost", "127.0.0.1"].some(domain => rootDomain.includes(domain)) ? 'http' : 'https';
+
+export function getFullDomain(subdomain?: string) {
+  if (subdomain) {
+    return `${subdomain}.${rootDomain}`;
+  }
+  return rootDomain;
+}
