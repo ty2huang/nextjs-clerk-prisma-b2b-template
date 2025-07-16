@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Home } from "lucide-react";
 import { Group } from "@prisma/client";
 import Image from "next/image";
-import { protocol, rootDomain } from "@/lib/utils";
+import { protocol, rootDomain, getFullDomain } from "@/lib/utils";
 
 const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
   const pathname = usePathname();
@@ -29,8 +29,8 @@ const Navbar = ({ currentGroup }: { currentGroup: Group | undefined }) => {
             <span className="text-gray-400 text-xl">/</span>
             <OrganizationSwitcher 
               hidePersonal={true}
-              afterSelectOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
-              afterCreateOrganizationUrl={`${protocol}://:slug.${rootDomain}/app`}
+              afterSelectOrganizationUrl={`${protocol}://${getFullDomain(":slug")}/app`}
+              afterCreateOrganizationUrl={`${protocol}://${getFullDomain(":slug")}/app`}
               afterLeaveOrganizationUrl={`${protocol}://${rootDomain}`}
               appearance={{
                 elements: {
