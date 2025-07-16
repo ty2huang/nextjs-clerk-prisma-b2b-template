@@ -76,9 +76,10 @@ export default function OrgPageClient({ allGroups, userGroups, isAdmin }: OrgPag
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   No groups yet
                 </h3>
-                <p className="text-gray-500">
-                  You are not a member of any group in this organization. {isAdmin ? "" : "Ask an admin to add you to one."}
-                </p>
+                <div className="text-gray-500">
+                  <p>You are not a member of any group in this organization.</p>
+                  <p>{isAdmin ? 'Click the "All Groups" tab to add or join a group.' : "Ask an admin of this organization to add you to one."}</p>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

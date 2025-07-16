@@ -10,25 +10,27 @@ This is a [Next.js](https://nextjs.org) template for building B2B applications. 
 
 ## Getting Started
 
-1. Create the `.env` file.
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Create the `.env` file.
 
 Copy the `.env.example` file to `.env`. We will fill in the values in the subsequent steps.
 
-2. Create a new Clerk application.
+3. Create a new Clerk application.
 
-Sign in to Clerk and navigate to the home page. From there, press the Create Application button to create a new application. Enter a title, select your sign-in options, and click Create Application.
+Sign in to Clerk and navigate to the home page. From there, press the Create Application button to create a new application. Enter the application name, select your sign-in options, and click Create Application.
 
-Find the publishable key and secret key on the application page and add them to the `.env` file (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY).
+Find the publishable key and secret key for the application in the "Overview" tab, and add them to the `.env` file (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY).
 
-3. Initialize database with Prisma
+In the "Configure" tab, go to the Organization Management Settings and ensure that the "Enable organizations" toggle is on.
 
-Run the following command to set up a postgres database with Prisma Postgres.
-
-```bash
-npx prisma init --db
-```
-
-Include the connection string in the `.env` file (DATABASE_URL).
+The following changes in the "Configure" tab are optional but worth considering:
+- "User & Authentication" > "Email, phone, username" > Enable "First and last name" > "Require first and last name"
+- "Organization Management" > "Settings" > Disable "Allow new users to create organizations" and "Allow new members to delete organizations"
 
 4. Set up ngrok
 
@@ -51,13 +53,35 @@ Click Add Endpoint and paste the ngrok URL into the Endpoint URL field and add /
 https://[your-domain].ngrok-free.app/api/webhooks/clerk
 ```
 
-Copy the Signing Secret and add it to your `.env` file (CLERK_WEBHOOK_SECRET).
+Pick the events to subscribe to. The following events are recommended to include:
+- organization.created, organization.updated, organization.deleted
+- user.created, user.updated, user.deleted
+
+After creating the webhook, copy the Signing Secret and add it to your `.env` file (CLERK_WEBHOOK_SECRET).
 
 6. Create blob storage
 
 Create a new blob store in Vercel. Copy its token and add it to the `.env` file (BLOB_READ_WRITE_TOKEN).
 
-7. Run the development server
+7. Initialize database with Prisma
+
+Run the following command to set up a postgres database with Prisma Postgres.
+
+```bash
+npx prisma init --db
+```
+
+Include the connection string in the `.env` file (DATABASE_URL).
+
+8. Set up the database
+
+Run the following command to create the database tables.
+
+```bash
+npx prisma migrate dev
+```
+
+9. Run the development server
 
 ```bash
 npm run dev
@@ -69,9 +93,11 @@ The commands `npm run build` and `npm run start` are used to build and start the
 
 ## Deploying to Production
 
-This project requires you to use your own domain name when deploying to production. If your domain is `example.com`, you will need to include both `example.com` and `*.example.com` as valid domains for your project.
+This project requires you to use your own domain name when deploying to production. If your domain is `example.com`, you will need to include both `example.com` and `*.example.com` as valid domains for your project. This includes setting the environment variable NEXT_PUBLIC_ROOT_DOMAIN for the production environment.
 
 Also, use this domain name for the webhook URL in your production Clerk application (for instance, `https://example.com/api/webhooks/clerk`). There is no need to use ngrok for production.
+
+Note that the subdomain is used to identify the current organization in the user session. To be robust, you should create a new organization without members in Clerk with the slug "www" such that it cannot be used as a slug for other organizations.
 
 ### Deploying to Vercel
 
