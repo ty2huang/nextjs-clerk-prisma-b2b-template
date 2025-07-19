@@ -14,7 +14,7 @@ export default async function GroupSettingsPage() {
   const { userId } = await getCachedAuth();
   const [isGroupAdmin, directMembership] = await Promise.all([
     isCurrentUserGroupOrOrgAdmin(group.id),
-    getGroupMembership(userId!, group.id)
+    getGroupMembership(group.id, userId!)
   ]);
 
   // User is a direct member if they have a membership record

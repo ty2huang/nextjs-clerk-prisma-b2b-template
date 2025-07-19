@@ -77,7 +77,7 @@ export async function updateGroup(groupId: string, data: { name?: string; slug?:
 }
 
 export async function deleteGroup(groupId: string) {
-  // This will cascade delete all related memberships and posts
+  // This will cascade delete all related memberships and content
   await prisma.group.delete({
     where: { id: groupId },
   });
@@ -107,27 +107,27 @@ export async function getGroupWithMemberships(groupId: string): Promise<GroupWit
 
 // Membership Queries
 
-export async function addUserToGroup(userId: string, groupId: string, role: string) {
+export async function addUserToGroup(groupId: string, userId: string, role: string) {
   const groupMembership = await prisma.groupMembership.create({
     data: { userId, groupId, role },
   });
   return groupMembership;
 }
 
-export async function getGroupMembership(userId: string, groupId: string) {
+export async function getGroupMembership(groupId: string, userId: string) {
   const membership = await prisma.groupMembership.findUnique({
     where: { userId_groupId: { userId, groupId } },
   });
   return membership;
 }
 
-export async function removeUserFromGroup(userId: string, groupId: string) {
+export async function removeUserFromGroup(groupId: string, userId: string) {
   await prisma.groupMembership.delete({
     where: { userId_groupId: { userId, groupId } },
   });
 }
 
-export async function updateGroupMembershipRole(userId: string, groupId: string, role: string) {
+export async function updateGroupMembershipRole(groupId: string, userId: string, role: string) {
   const membership = await prisma.groupMembership.update({
     where: { userId_groupId: { userId, groupId } },
     data: { role },

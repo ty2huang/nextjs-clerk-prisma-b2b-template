@@ -6,10 +6,12 @@ import {
   getOrganizationMembersAction, addUserToGroupAction, removeUserFromGroupAction, updateGroupMembershipRoleAction 
 } from "@/actions/auth";
 import { MembershipWithUser } from "@/lib/db/auth";
-import { Trash, Plus } from "lucide-react";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import { Trash, Plus, ChevronDown, Check } from "lucide-react";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { groupRoles } from "@/lib/roles";
 import { User } from "@prisma/client";
+import { toast } from "sonner";
 
 interface MembersPageClientProps {
   groupId: string;
@@ -20,6 +22,8 @@ interface MembersPageClientProps {
 
 export default function MembersPageClient({ groupId, members, isAdmin, sessionUserId }: MembersPageClientProps) {
   const router = useRouter();
+  const { confirm } = useConfirm();
+  
   const membersSorted = useMemo(() => members.sort((a, b) => {
     return b.createdAt.getTime() - a.createdAt.getTime();
   }), [members]);
@@ -30,14 +34,14 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Confirmation dialog state
-  const [memberToRemove, setMemberToRemove] = useState<MembershipWithUser | null>(null);
 
-  // Close dropdown when clicking outside
+    // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      const target = event.target as Element;
+      
+      // Handle search suggestions dropdown
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setShowSuggestions(false);
       }
     };
@@ -107,14 +111,34 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
         router.refresh();
       } catch (error) {
         console.error("Failed to add user to group:", error);
-        alert("Failed to add user to group. Please try again.");
+        toast.error("Failed to add user to group");
       }
     });
   };
 
   // Handle remove member confirmation
-  const handleRemoveMember = (member: MembershipWithUser) => {
-    setMemberToRemove(member);
+  const handleRemoveMember = async (member: MembershipWithUser) => {
+    const confirmed = await confirm({
+      title: "Remove Member",
+      message: `Are you sure you want to remove ${member.user.name || member.user.email} from this group? They will lose access to all group content.`,
+      confirmText: "Remove Member",
+      cancelText: "Cancel",
+      confirmButtonClass: "bg-red-600 hover:bg-red-700"
+    });
+
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      try {
+        await removeUserFromGroupAction(groupId, member.user.clerkId);
+        // Refresh the page data to show the updated member list
+        router.refresh();
+        toast.success("Member removed successfully");
+      } catch (error) {
+        console.error("Failed to remove user from group:", error);
+        toast.error("Failed to remove user from group");
+      }
+    });
   };
 
   // Handle role change
@@ -126,25 +150,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
         router.refresh();
       } catch (error) {
         console.error("Failed to update user role:", error);
-        alert("Failed to update user role. Please try again.");
-      }
-    });
-  };
-
-  // Confirm remove member
-  const confirmRemoveMember = () => {
-    if (!memberToRemove) return;
-    
-    startTransition(async () => {
-      try {
-        await removeUserFromGroupAction(groupId, memberToRemove.user.clerkId);
-        // Refresh the page data to show the updated member list
-        router.refresh();
-      } catch (error) {
-        console.error("Failed to remove user from group:", error);
-        alert("Failed to remove user from group. Please try again.");
-      } finally {
-        setMemberToRemove(null);
+        toast.error("Failed to update user role");
       }
     });
   };
@@ -200,7 +206,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                         <Plus className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Add organization members as members of this group by typing their name or email here"
+                          placeholder="Add groups members by searching the name or email here"
                           value={searchInput}
                           onChange={(e) => handleSearchChange(e.target.value)}
                           onFocus={() => searchInput.trim() && setShowSuggestions(true)}
@@ -237,7 +243,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                             ))
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500">
-                              No users found
+                              No users found. The user must be a member of this organization first.
                             </div>
                           )}
                         </div>
@@ -279,20 +285,39 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {isAdmin ? (
-                      <select
+                      <Listbox
                         value={member.role}
-                        onChange={(e) => handleRoleChange(member.user.clerkId, e.target.value)}
+                        onChange={(newRole) => handleRoleChange(member.user.clerkId, newRole)}
                         disabled={isPending}
-                        className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 min-w-[120px]"
                       >
-                        {groupRoles.map((role) => (
-                          <option key={role.name} value={role.name}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
+                        <div className="relative">
+                          <ListboxButton className="relative w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 flex items-center justify-between">
+                            <span className="block truncate">
+                              {groupRoles.find(role => role.name === member.role)?.label || toTitleCase(member.role)}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-400 transition-transform duration-200" />
+                          </ListboxButton>
+
+                          <ListboxOptions className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg py-1 focus:outline-none">
+                            {groupRoles.map((role) => (
+                              <ListboxOption
+                                key={role.name}
+                                value={role.name}
+                                className="relative cursor-default select-none py-2.5 px-4 text-sm text-gray-900 data-[focus]:bg-gray-50 data-[selected]:bg-blue-50 data-[selected]:text-blue-700"
+                              >
+                                {({ selected }) => (
+                                  <div className="flex items-center justify-between">
+                                    <span className="block truncate">{role.label}</span>
+                                    {selected && <Check className="h-4 w-4 text-blue-600" />}
+                                  </div>
+                                )}
+                              </ListboxOption>
+                            ))}
+                          </ListboxOptions>
+                        </div>
+                      </Listbox>
                     ) : (
-                      <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                      <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-800">
                         {toTitleCase(member.role)}
                       </span>
                     )}
@@ -315,21 +340,6 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
           </table>
         </div>
       </div>
-
-      {/* Remove Member Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={memberToRemove !== null}
-        onClose={() => {
-          setMemberToRemove(null);
-        }}
-        onConfirm={confirmRemoveMember}
-        title="Remove Member"
-        message={`Are you sure you want to remove "${memberToRemove?.user.name || memberToRemove?.user.email}" from this group? They will lose access to all group content.`}
-        confirmText="Remove Member"
-        cancelText="Cancel"
-        confirmButtonClass="bg-red-600 hover:bg-red-700"
-        isLoading={isPending}
-      />
     </div>
   );
 } 

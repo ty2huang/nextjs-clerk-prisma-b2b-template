@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-clerk-prisma",
+  "name": "nextjs-clerk-prisma-b2b-template",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.25.3",
     "@clerk/themes": "^2.3.2",
+    "@headlessui/react": "^2.2.4",
     "@prisma/client": "^6.12.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@vercel/blob": "^1.1.1",

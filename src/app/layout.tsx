@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { getOptionalGroup } from "@/lib/session";
 import { headers } from "next/headers";
 import { protocol, rootDomain } from "@/lib/utils";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,11 +39,13 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ClerkProvider afterSignOutUrl={`${protocol}://${rootDomain}`}>
-          <Navbar currentGroup={currentGroup} />
-          <div className="bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-1">
-            {children}
-          </div>
-          <Toaster />
+          <ConfirmDialogProvider>
+            <Navbar currentGroup={currentGroup} />
+            <div className="bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-1">
+              {children}
+            </div>
+            <Toaster />
+          </ConfirmDialogProvider>
         </ClerkProvider>
       </body>
     </html>

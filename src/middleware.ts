@@ -29,7 +29,6 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
     // Rewrite to organization route so Clerk's organizationSyncOptions can work
     const suffix = requestPath === "/app" ? "" : requestPath.replace("/app/", "/");
     const newPath = `/org/${subdomain}${suffix}`;
-    console.log("rewriting to destination path:", newPath);
     
     // Create a new URL with the rewritten path
     const url = req.nextUrl.clone();
@@ -56,6 +55,7 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
     if (subdomain && requestPath.startsWith("/app")) {
       // For subdomain requests, we need to rewrite the response
       response = NextResponse.rewrite(clerkReq.url);
+      console.log("rewriting to destination path:", clerkReq.nextUrl.pathname);
     } else {
       response = NextResponse.next();
     }

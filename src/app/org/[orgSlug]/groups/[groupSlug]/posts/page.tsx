@@ -13,7 +13,7 @@ export default async function PostsPage() {
 
     const { userId, orgId } = await getCachedAuth();
     const allPosts = await getAllPostsFromOrg(orgId!);
-    const membership = await getGroupMembership(userId!, group.id);
+    const membership = await getGroupMembership(group.id, userId!);
 
     return (
       <div className="max-w-2xl mx-auto p-4">

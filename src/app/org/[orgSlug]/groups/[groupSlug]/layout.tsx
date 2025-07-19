@@ -28,7 +28,7 @@ export default async function GroupLayout({ children, params }: GroupLayoutProps
 
   // If the user is not a member of the current group, redirect to the groups page
   if (currentGroup && !isAdmin) {
-    const membership = await getGroupMembership(userId!, currentGroup.id);
+    const membership = await getGroupMembership(currentGroup.id, userId!);
     if (!membership) {
       notFound();
     }

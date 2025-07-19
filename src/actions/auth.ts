@@ -82,7 +82,7 @@ export async function createGroupAction(name: string, slug: string, logo: File |
   }
 } 
 
-export async function updateGroupAction(groupId: string, name: string, slug: string, logo: File | null) {
+export async function updateGroupAction(groupId: string, name: string, slug: string, logo?: File | null) {
   const { orgId } = await getCachedAuth();
   
   // Check if user is an admin (either org admin or group admin)
@@ -104,30 +104,23 @@ export async function updateGroupAction(groupId: string, name: string, slug: str
     }
 
     // Handle logo logic
-    let logoUrl: string | null | undefined = undefined; // undefined means don't update
-    
-    if (logo && logo.name === "CLEAR_LOGO") {
-      // User wants to clear the logo
-      logoUrl = null;
-    } else if (logo && logo.size > 0) {
-      // User uploaded a new logo
-      logoUrl = await putLogo(logo);
+    let logoUrl: string | null | undefined; // undefined means don't update
+    if (logo) {
+      // User uploaded a new logo if it's not empty
+      logoUrl = logo.size > 0 ? await putLogo(logo) : null;
+    } else {
+      logoUrl = logo; // logo===undefined means don't update
     }
-    // If logo is null, we don't update the logo field (keep existing)
 
     // Update the group
     const updateData: { name: string; slug: string; logoUrl?: string | null } = {
       name: name.trim(),
       slug: slug.trim(),
+      logoUrl: logoUrl
     };
-    
-    // Only include logoUrl in update if it should be changed
-    if (logoUrl !== undefined) {
-      updateData.logoUrl = logoUrl;
-    }
 
     const updatedGroup = await updateGroup(groupId, updateData);
-
+    
     return { success: true, group: updatedGroup };
   } catch (error) {
     console.error("Failed to update group:", error);
@@ -160,7 +153,7 @@ export async function leaveGroupAction(groupId: string) {
   try {
     await validateGroupMembership(groupId);
 
-    await removeUserFromGroup(userId!, groupId);
+    await removeUserFromGroup(groupId, userId!);
     return { success: true };
   } catch (error) {
     console.error("Failed to leave group:", error);
@@ -177,7 +170,7 @@ export async function addUserToGroupAction(groupId: string, userId: string, role
 
   try {
     // Check if user is already a member
-    const existingMembership = await getGroupMembership(userId, groupId);
+    const existingMembership = await getGroupMembership(groupId, userId);
     if (existingMembership) {
       throw new Error("User is already a member of this group");
     }
@@ -186,7 +179,7 @@ export async function addUserToGroupAction(groupId: string, userId: string, role
     await getOrCreateUserFromClerkId(userId);
 
     // Add user to group as a member
-    await addUserToGroup(userId, groupId, role);
+    await addUserToGroup(groupId, userId, role);
     
     return { success: true };
   } catch (error) {
@@ -202,7 +195,7 @@ export async function removeUserFromGroupAction(groupId: string, userId: string)
   }
 
   try {
-    await removeUserFromGroup(userId, groupId);
+    await removeUserFromGroup(groupId, userId);
 
     return { success: true };
   } catch (error) {

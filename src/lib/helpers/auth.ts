@@ -26,7 +26,7 @@ export const getOrCreateUserFromClerkId = async (clerkUserId: string) => {
 export const validateGroupMembership = cache( 
   async (groupId: string) => {
     const { userId } = await getCachedAuth();
-    const membership = await getGroupMembership(userId!, groupId);
+    const membership = await getGroupMembership(groupId, userId!);
     if (!membership) {
       console.error(`User ${userId} is not a member of group ${groupId}`);
       throw new Error(`User is not a member of group`);
