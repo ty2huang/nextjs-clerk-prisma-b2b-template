@@ -10,35 +10,10 @@ import { getCachedAuth } from "../lib/session";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { groupRoles } from "@/lib/roles";
-import { Group, User } from "@prisma/client";
+import { Group } from "@prisma/client";
 import { getOrCreateUserFromClerkId, isCurrentUserGroupOrOrgAdmin, validateGroupMembership } from "@/lib/helpers/auth";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-
-// Organization Membership Actions
-
-export async function getOrganizationMembersAction(): Promise<User[]> {
-  const { orgId } = await getCachedAuth();
-  
-  try {
-    const clerk = await clerkClient();
-    const orgMembers = await clerk.organizations.getOrganizationMembershipList({
-      organizationId: orgId!
-    });
-
-    return (orgMembers.data
-      .filter(member => member.publicUserData) // Filter out members without public user data
-      .map(member => ({
-        clerkId: member.publicUserData!.userId!,
-        name: `${member.publicUserData!.firstName || ''} ${member.publicUserData!.lastName || ''}`.trim() || 'Unnamed User',
-        email: member.publicUserData!.identifier!
-      }))
-    );
-  } catch (error) {
-    console.error("Failed to fetch organization members:", error);
-    throw new Error("Failed to fetch organization members");
-  }
-}
 
 // Group Actions
 

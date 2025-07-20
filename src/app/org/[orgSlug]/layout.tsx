@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCachedAuth } from "@/lib/session";
 import { getOrgFromId, createOrg } from "@/lib/db/auth";
-import { clerkClient } from "@clerk/nextjs/server";
 import { getOrCreateUserFromClerkId } from "@/lib/helpers/auth";
 import { rootDomain, protocol } from "@/lib/utils";
 
@@ -10,11 +9,7 @@ const getOrCreateOrgFromClerkId = async (clerkOrgId: string) => {
   
   // Sync clerk org to db if not exists
   if (!org) {
-    const clerk = await clerkClient();
-    const { name, slug } = await clerk.organizations.getOrganization({
-      organizationId: clerkOrgId,
-    });
-    const newOrg = await createOrg(clerkOrgId, name, slug);
+    const newOrg = await createOrg(clerkOrgId);
     return newOrg;
   }
   

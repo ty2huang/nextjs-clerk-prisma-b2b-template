@@ -3,9 +3,9 @@ import prisma from "../prisma";
 
 // Organization Queries
 
-export async function createOrg(clerkOrgId: string, name: string, slug: string) {
+export async function createOrg(clerkOrgId: string) {
   const org = await prisma.organization.create({
-    data: { clerkId: clerkOrgId, name, slug },
+    data: { clerkId: clerkOrgId },
   });
   return org;
 }
@@ -19,9 +19,9 @@ export async function getOrgFromId(clerkOrgId: string) {
 
 // User Queries
 
-export async function createUser(clerkUserId: string, name: string, email: string) {
+export async function createUser(clerkUserId: string) {
   const user = await prisma.user.create({
-    data: { clerkId: clerkUserId, name, email },
+    data: { clerkId: clerkUserId },
   });
   return user;
 }

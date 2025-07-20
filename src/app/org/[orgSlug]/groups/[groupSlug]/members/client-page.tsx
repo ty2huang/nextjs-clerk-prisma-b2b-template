@@ -3,34 +3,32 @@
 import { useState, useTransition, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  getOrganizationMembersAction, addUserToGroupAction, removeUserFromGroupAction, updateGroupMembershipRoleAction 
+  addUserToGroupAction, removeUserFromGroupAction, updateGroupMembershipRoleAction 
 } from "@/actions/auth";
-import { MembershipWithUser } from "@/lib/db/auth";
 import { Trash, Plus, ChevronDown, Check } from "lucide-react";
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { groupRoles } from "@/lib/roles";
-import { User } from "@prisma/client";
 import { toast } from "sonner";
+import { MembershipWithNameAndEmail, UserWithNameAndEmail } from "@/lib/helpers/auth";
 
 interface MembersPageClientProps {
   groupId: string;
-  members: MembershipWithUser[];
+  groupMemberships: MembershipWithNameAndEmail[];
+  orgMembers: UserWithNameAndEmail[];
   isAdmin: boolean;
   sessionUserId: string;
 }
 
-export default function MembersPageClient({ groupId, members, isAdmin, sessionUserId }: MembersPageClientProps) {
+export default function MembersPageClient({ groupId, groupMemberships, orgMembers, isAdmin, sessionUserId }: MembersPageClientProps) {
   const router = useRouter();
   const { confirm } = useConfirm();
   
-  const membersSorted = useMemo(() => members.sort((a, b) => {
+  const membershipsSorted = useMemo(() => groupMemberships.sort((a, b) => {
     return b.createdAt.getTime() - a.createdAt.getTime();
-  }), [members]);
+  }), [groupMemberships]);
 
   const [searchInput, setSearchInput] = useState("");
-  const [orgMembers, setOrgMembers] = useState<User[]>([]);
-  const [isLoadingOrgMembers, setIsLoadingOrgMembers] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isPending, startTransition] = useTransition();
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -74,15 +72,6 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
     
     if (value.trim()) {
       setShowSuggestions(true);
-      setIsLoadingOrgMembers(true);
-      try {
-        const members = await getOrganizationMembersAction();
-        setOrgMembers(members);
-      } catch (error) {
-        console.error("Failed to load organization members:", error);
-      } finally {
-        setIsLoadingOrgMembers(false);
-      }
     } else {
       setShowSuggestions(false);
     }
@@ -91,7 +80,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
   // Filter organization members based on search input
   const filteredOrgMembers = orgMembers.filter(orgMember => {
     const searchTerm = searchInput.toLowerCase();
-    const isAlreadyMember = membersSorted.some(member => member.user.email === orgMember.email);
+    const isAlreadyMember = membershipsSorted.some(member => member.user.clerkId === orgMember.clerkId);
     
     return !isAlreadyMember && (
       orgMember.name?.toLowerCase().includes(searchTerm) ||
@@ -117,10 +106,10 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
   };
 
   // Handle remove member confirmation
-  const handleRemoveMember = async (member: MembershipWithUser) => {
+  const handleRemoveMember = async (membership: MembershipWithNameAndEmail) => {
     const confirmed = await confirm({
       title: "Remove Member",
-      message: `Are you sure you want to remove ${member.user.name || member.user.email} from this group? They will lose access to all group content.`,
+      message: `Are you sure you want to remove ${membership.user.name || membership.user.email} from this group? They will lose access to all group content.`,
       confirmText: "Remove Member",
       cancelText: "Cancel",
       confirmButtonClass: "bg-red-600 hover:bg-red-700"
@@ -130,7 +119,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
 
     startTransition(async () => {
       try {
-        await removeUserFromGroupAction(groupId, member.user.clerkId);
+        await removeUserFromGroupAction(groupId, membership.user.clerkId);
         // Refresh the page data to show the updated member list
         router.refresh();
         toast.success("Member removed successfully");
@@ -163,7 +152,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
           <div className="flex items-center gap-2">
             <span>Number of Members:</span>
             <span className="bg-gray-100 px-2 py-1 rounded-full text-xs font-medium">
-              {membersSorted.length}
+              {membershipsSorted.length}
             </span>
           </div>
         </div>
@@ -219,9 +208,7 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                       {/* Dropdown with search results */}
                       {searchInput.trim() && showSuggestions && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-[100] max-h-80 overflow-y-auto">
-                          {isLoadingOrgMembers ? (
-                            <div className="px-4 py-3 text-sm text-gray-500">Loading...</div>
-                          ) : filteredOrgMembers.length > 0 ? (
+                          {filteredOrgMembers.length > 0 ? (
                             filteredOrgMembers.map((orgMember) => (
                               <button
                                 key={orgMember.clerkId}
@@ -254,8 +241,8 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
               )}
               
               {/* Existing members */}
-              {membersSorted.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50">
+              {membershipsSorted.map((membership) => (
+                <tr key={membership.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {/* <div className="flex-shrink-0 h-10 w-10">
@@ -267,33 +254,33 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                       </div> */}
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {member.user.name || 'Unnamed User'}
-                          {member.user.clerkId === sessionUserId && (
+                          {membership.user.name || 'Unnamed User'}
+                          {membership.user.clerkId === sessionUserId && (
                             <span className="ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-md border border-gray-300 bg-gray-100 text-gray-500">
                               You
                             </span>
                           )}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {member.user.email}
+                          {membership.user.email}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(member.createdAt)}
+                    {formatDate(membership.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {isAdmin ? (
                       <Listbox
-                        value={member.role}
-                        onChange={(newRole) => handleRoleChange(member.user.clerkId, newRole)}
+                        value={membership.role}
+                        onChange={(newRole) => handleRoleChange(membership.user.clerkId, newRole)}
                         disabled={isPending}
                       >
                         <div className="relative">
                           <ListboxButton className="relative w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 flex items-center justify-between">
                             <span className="block truncate">
-                              {groupRoles.find(role => role.name === member.role)?.label || toTitleCase(member.role)}
+                              {groupRoles.find(role => role.name === membership.role)?.label || toTitleCase(membership.role)}
                             </span>
                             <ChevronDown className="h-4 w-4 text-gray-400 transition-transform duration-200" />
                           </ListboxButton>
@@ -318,17 +305,17 @@ export default function MembersPageClient({ groupId, members, isAdmin, sessionUs
                       </Listbox>
                     ) : (
                       <span className="inline-flex px-3 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-800">
-                        {toTitleCase(member.role)}
+                        {toTitleCase(membership.role)}
                       </span>
                     )}
                   </td>
                   {isAdmin && (
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => member.user.clerkId !== sessionUserId && handleRemoveMember(member)}
-                        disabled={isPending || member.user.clerkId === sessionUserId}
+                        onClick={() => membership.user.clerkId !== sessionUserId && handleRemoveMember(membership)}
+                        disabled={isPending || membership.user.clerkId === sessionUserId}
                         className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:text-gray-400"
-                        title={member.user.clerkId === sessionUserId ? "Go to Settings to leave group" : "Remove member"}
+                        title={membership.user.clerkId === sessionUserId ? "Go to Settings to leave group" : "Remove member"}
                       >
                         <Trash className="h-4 w-4" />
                       </button>

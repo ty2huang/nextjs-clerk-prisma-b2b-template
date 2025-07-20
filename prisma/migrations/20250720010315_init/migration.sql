@@ -1,8 +1,7 @@
 -- CreateTable
 CREATE TABLE "User" (
     "clerkId" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "name" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("clerkId")
 );
@@ -10,8 +9,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Organization" (
     "clerkId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Organization_pkey" PRIMARY KEY ("clerkId")
 );
@@ -19,6 +17,8 @@ CREATE TABLE "Organization" (
 -- CreateTable
 CREATE TABLE "Group" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "orgId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -30,10 +30,11 @@ CREATE TABLE "Group" (
 -- CreateTable
 CREATE TABLE "GroupMembership" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
     "groupId" TEXT NOT NULL,
     "role" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "GroupMembership_pkey" PRIMARY KEY ("id")
 );
@@ -41,21 +42,15 @@ CREATE TABLE "GroupMembership" (
 -- CreateTable
 CREATE TABLE "Post" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT,
     "published" BOOLEAN NOT NULL DEFAULT false,
     "groupId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Organization_slug_key" ON "Organization"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Group_orgId_slug_key" ON "Group"("orgId", "slug");

@@ -17,16 +17,12 @@ export async function POST(req: Request) {
     "svix-signature": headerPayload.get("svix-signature")!,
   }) as WebhookEvent;
 
-  if (event.type === "user.created" || event.type === "user.updated") {
-    const { id, email_addresses, first_name, last_name } = event.data;
-    const name = `${first_name} ${last_name}`;
-    const email = email_addresses[0].email_address;
+  if (event.type === "user.created") {
+    const { id } = event.data;
     await prisma.user.upsert({
       where: { clerkId: id },
-      update: { name, email },
-      create: {
-        clerkId: id, name, email
-      },
+      update: { },
+      create: { clerkId: id },
     });
   }
   else if (event.type === "user.deleted") {
@@ -35,12 +31,12 @@ export async function POST(req: Request) {
       where: { clerkId: id },
     });
   }
-  else if (event.type === "organization.created" || event.type === "organization.updated") {
-    const { id, name, slug } = event.data;
+  else if (event.type === "organization.created") {
+    const { id } = event.data;
     await prisma.organization.upsert({
       where: { clerkId: id },
-      update: { name, slug },
-      create: { clerkId: id, name, slug },
+      update: { },
+      create: { clerkId: id },
     });
   }
   else if (event.type === "organization.deleted") {

@@ -54,8 +54,8 @@ https://[your-domain].ngrok-free.app/api/webhooks/clerk
 ```
 
 Pick the events to subscribe to. The following events are recommended to include:
-- organization.created, organization.updated, organization.deleted
-- user.created, user.updated, user.deleted
+- organization.created, organization.deleted
+- user.created, user.deleted
 
 After creating the webhook, copy the Signing Secret and add it to your `.env` file (CLERK_WEBHOOK_SECRET).
 

@@ -1,7 +1,8 @@
 import { cache } from "react";
 import { createUser, getGroupMembership, getUserFromId } from "../db/auth";
-import { clerkClient } from "@clerk/nextjs/server";
 import { getCachedAuth } from "../session";
+import { clerkClient } from "@clerk/nextjs/server";
+import { GroupMembership } from "@prisma/client";
 
 // User Actions
 
@@ -10,11 +11,7 @@ export const getOrCreateUserFromClerkId = async (clerkUserId: string) => {
   
   // Sync clerk user to db if not exists
   if (!user){
-    const clerk = await clerkClient();
-    const userData = await clerk.users.getUser(clerkUserId);
-    if (!userData) throw new Error("User not found");
-    const { firstName, lastName, emailAddresses } = userData;
-    const newUser = await createUser(clerkUserId, `${firstName} ${lastName}`, emailAddresses[0].emailAddress);
+    const newUser = await createUser(clerkUserId);
     return newUser;
   }
 
@@ -44,3 +41,40 @@ export const isCurrentUserGroupOrOrgAdmin = cache(
     return membership.role === "admin";
   }
 );
+
+// Organization Membership
+
+export type UserWithNameAndEmail = {
+  clerkId: string;
+  createdAt: Date;
+  name: string;
+  email: string;
+}
+
+export type MembershipWithNameAndEmail = GroupMembership & {
+  user: UserWithNameAndEmail;
+}
+
+export async function getOrganizationMembers(): Promise<UserWithNameAndEmail[]> {
+  const { orgId } = await getCachedAuth();
+  
+  try {
+    const clerk = await clerkClient();
+    const orgMembers = await clerk.organizations.getOrganizationMembershipList({
+      organizationId: orgId!
+    });
+
+    return (orgMembers.data
+      .filter(member => member.publicUserData) // Filter out members without public user data
+      .map(member => ({
+        clerkId: member.publicUserData!.userId!,
+        createdAt: new Date(member.createdAt),
+        name: `${member.publicUserData!.firstName || ''} ${member.publicUserData!.lastName || ''}`.trim() || 'Unnamed User',
+        email: member.publicUserData!.identifier!
+      }))
+    );
+  } catch (error) {
+    console.error("Failed to fetch organization members:", error);
+    throw new Error("Failed to fetch organization members");
+  }
+}

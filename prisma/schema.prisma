@@ -13,52 +13,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Other than the clerkId, we avoid duplicating any user or organization information from Clerk into the database 
+// such that we do not have to watch for updates to the Clerk data (in the webhooks) to keep the database in sync
+
 model User {
-  clerkId     String    @id
-  email       String    @unique
-  name        String?
-  memberships GroupMembership[]
+  clerkId          String         @id
+  createdAt        DateTime       @default(now())
+  memberships      GroupMembership[]
 }
 
 model Organization {
-  clerkId     String    @id
-  name        String    
-  slug        String    @unique
-  groups      Group[]
+  clerkId          String         @id
+  createdAt        DateTime       @default(now())
+  groups           Group[]
 }
 
 model Group {
-  id          String    @id @default(uuid())
-  orgId       String
-  org         Organization @relation(fields: [orgId], references: [clerkId], onDelete: Cascade)
-  name        String
-  slug        String
-  logoUrl     String?
-  memberships GroupMembership[]
-  posts       Post[]
+  id               String         @id @default(uuid())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  orgId            String
+  org              Organization   @relation(fields: [orgId], references: [clerkId], onDelete: Cascade)
+  name             String
+  slug             String
+  logoUrl          String?
+  memberships      GroupMembership[]
+  posts            Post[]
   
   @@unique([orgId, slug])
 }
 
 model GroupMembership {
-  id          String    @id @default(uuid())
-  userId      String 
-  user        User      @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
-  groupId     String 
-  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  role        String
-  createdAt   DateTime  @default(now())
+  id               String         @id @default(uuid())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  userId           String
+  user             User           @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
+  groupId          String
+  group            Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role             String
 
   @@unique([userId, groupId])
 }
 
 model Post { 
-  id          String    @id @default(uuid())
-  title       String 
-  content     String? 
-  published   Boolean   @default(false)
-  groupId     String 
-  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id               String         @id @default(uuid())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  title            String 
+  content          String? 
+  published        Boolean        @default(false)
+  groupId          String 
+  group            Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
 }
